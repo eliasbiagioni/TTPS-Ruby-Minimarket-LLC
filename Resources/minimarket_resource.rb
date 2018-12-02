@@ -3,8 +3,8 @@ require 'json'
 require_relative '../Controllers/minimarket_controller'
 
 minimarket = MinimarketLLCController.new
-minimarket.new_item({"sku"=>215,"description"=>'Harina 000', "stock"=>10,"price"=>12.5})
-minimarket.new_item({"sku"=>211, "description"=>'Polenta', "stock"=>50,"price"=>21.5})
+#minimarket.new_item({"sku"=>215,"description"=>'Harina 000', "stock"=>10,"price"=>12.5})
+#minimarket.new_item({"sku"=>211, "description"=>'Polenta', "stock"=>50,"price"=>21.5})
 
 before do
 	content_type :json
@@ -37,6 +37,7 @@ end
 put '/items/:id.json' do | id |
 	status 422
 	data = JSON.parse(request.body.read).slice('sku', 'description', 'stock', 'price')
+	#Se valida que se haya pasado al menos un parametro
 	if(data.size >= 1)
 		item = minimarket.update_item(id,data)
 		(status 200) if item[:message].nil?
@@ -53,7 +54,7 @@ end
 
 put '/cart/:username.json' do |username|
 	status 422
-	data = JSON.parse(request.body.read).slice('id', 'cantidad')
+	data = JSON.parse(request.body.read).slice('id', 'amount')
 	if (data.size == 2)
 		shopping_cart = minimarket.add_item_to_shopping_cart(username,data)
 		(status 200) if shopping_cart[:message].nil?
@@ -63,8 +64,9 @@ put '/cart/:username.json' do |username|
 	end
 end
 
-delete '/cart/:username/:item_id.json' do |username,item|
-	
+delete '/cart/:username/:item_id.json' do |username,item_id|
+	status 202
+	minimarket.delete_item_from_shopping_cart(username,item_id).to_json
 end
 
 

@@ -18,6 +18,7 @@ class MinimarketLLCController
 	end
 
 	def new_item(data)
+		#Crea un nuevo item con los datos en data, si es que el sku en data no lo posee ningun item ya almacenado
 		if (@items.detect {|item| item[1].sku == data['sku']}).nil?
 			@items[@id_item] = Item.new(@id_item, data['sku'], data['description'], data['price'], data['stock'])
 			@id_item += 1
@@ -28,6 +29,7 @@ class MinimarketLLCController
 	end
 
 	def update_item(id,data)
+		#Actualiza un item con los datos en data
 		item = @items[id.to_i]
 		if(item.nil?)
 			{"message": "No se encontró el ítem"}
@@ -40,8 +42,9 @@ class MinimarketLLCController
 	end	
 
 	def add_item_to_shopping_cart(username, data)
-		if @shopping_carts[username].add_item(@items[data['id']], data['cantidad']) 
-			@items[data['id']].stock -=  data['cantidad'] 
+		#Agrega un item al carrito de username con la cantidad especificada en data
+		if @shopping_carts[username].add_item(@items[data['id']], data['amount']) 
+			@items[data['id']].stock -=  data['amount'] 
 			@shopping_carts[username].json_shopping_cart
 		else
 			{"message": "No se pudo agregar el item porque la cantidad especificada supera el stock"}
@@ -49,12 +52,25 @@ class MinimarketLLCController
 	end
 
 	def user_shopping_cart(user)
+		#Retorna el carrito de user en formato Hash
 		@shopping_carts[user].json_shopping_cart
 	end
 
 	def item(id)
+		#Retorna el item con el id pasado como parametro, en formato Hash
 		item = @items.detect { | item | item[1].id == id.to_i}
 		item.nil? ? {"error": "No se encuentra item con ese id"} : item[1].to_long_hash
 	end
 
+	def delete_item_from_shopping_cart(username,item_id)
+		#Elimina un item del carrito de username, si es que este existe. Actualiza el stock del item.
+		shopping_cart = @shopping_carts[username]
+		if shopping_cart.has_item(item_id)
+			amount_to_recover = shopping_cart.delete_item(item_id)
+			update_item(item_id,{"stock": (@items[item_id.to_i].stock + amount_to_recover)})
+			shopping_cart.json_shopping_cart
+		else
+			{"message": "No posee dicho item en el carrito"}
+		end
+	end
 end
